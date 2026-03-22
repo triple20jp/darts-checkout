@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ダーツ チェックアウトクイズ</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;--surface:#161920;--surface2:#1e2230;
+  --border:#ffffff18;--border2:#ffffff30;--text:#f0f0ee;--muted:#7a7f8e;
+  --accent:#e8c84a;--accent2:#f0a030;--red:#e84a4a;--green:#4ae8a0;--blue:#4a9ae8;
+  --radius:12px;--radius-sm:8px;
+}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.app{max-width:500px;margin:0 auto;padding:20px 16px 60px}
+.screen{display:none}.screen.active{display:block}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:3px;color:var(--accent);line-height:1}
+.logo span{color:var(--text);opacity:0.4}
+.tagline{font-size:12px;color:var(--muted);margin-top:2px;letter-spacing:0.08em}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:transparent;color:var(--text);font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all 0.15s;width:100%;margin-bottom:8px}
+.btn:hover{background:var(--surface2);border-color:var(--accent)}
+.btn:active{transform:scale(0.97)}
+.btn.accent{background:var(--accent);color:#0d0f14;border-color:var(--accent)}
+.btn.accent:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn.ghost{background:var(--surface2);border-color:var(--border)}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+.mode-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:22px 20px;margin-bottom:10px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:16px}
+.mode-card:hover{border-color:var(--accent);background:var(--surface2)}
+.mode-icon{font-size:28px;flex-shrink:0}
+.mode-info h3{font-size:16px;font-weight:700;margin-bottom:3px}
+.mode-info p{font-size:12px;color:var(--muted);line-height:1.5}
+.out-option{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px 12px;cursor:pointer;transition:all 0.15s}
+.out-option:hover{border-color:var(--border2)}
+.out-option.selected{border-color:var(--accent);background:#e8c84a12}
+.out-option p:first-child{font-size:13px;font-weight:700;margin-bottom:4px}
+.out-option p:last-child{font-size:11px;color:var(--muted);line-height:1.5}
+.score-display{text-align:center;padding:30px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;position:relative;overflow:hidden}
+.score-display::before{content:'';position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:200px;height:200px;background:var(--accent);opacity:0.03;border-radius:50%}
+.score-label{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.score-number{font-family:'Bebas Neue',sans-serif;font-size:96px;color:var(--accent);line-height:1;letter-spacing:2px}
+.score-sub{font-size:13px;color:var(--muted);margin-top:4px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.choice{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px 12px;cursor:pointer;transition:all 0.15s;text-align:left}
+.choice:hover{border-color:var(--border2);background:var(--surface2)}
+.choice.correct{border-color:var(--green)!important;background:#4ae8a010!important}
+.choice.wrong{border-color:var(--red)!important;background:#e84a4a10!important;opacity:0.6}
+.choice.disabled{cursor:default}
+.choice-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.choice-text{font-size:13px;font-weight:700;line-height:1.5;color:var(--text)}
+.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.progress-bar{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.4s ease}
+.progress-label{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap}
+.turn-badge{display:inline-flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:6px 14px;font-size:13px;font-weight:700;margin-bottom:14px}
+.turn-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.stat-row:last-child{border-bottom:none}
+.stat-label{font-size:13px;color:var(--muted)}
+.stat-value{font-size:15px;font-weight:700;color:var(--text)}
+.stat-value.accent{color:var(--accent)}
+.result-badge{display:inline-block;padding:5px 14px;border-radius:100px;font-size:12px;font-weight:700;margin-bottom:14px}
+.result-badge.correct{background:#4ae8a020;color:var(--green);border:1px solid var(--green)}
+.result-badge.wrong{background:#e84a4a20;color:var(--red);border:1px solid var(--red)}
+.vs-scores{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:16px}
+.vs-player{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 12px;text-align:center}
+.vs-player.active{border-color:var(--accent)}
+.vs-player-name{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.vs-player-score{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--accent);line-height:1}
+.vs-player-correct{font-size:11px;color:var(--muted)}
+.vs-divider{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--muted)}
+.winner-display{text-align:center;padding:30px 20px}
+.winner-icon{font-size:56px;margin-bottom:12px}
+.winner-name{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--accent);letter-spacing:2px}
+.winner-sub{font-size:14px;color:var(--muted);margin-top:4px}
+.checkout-answer{font-size:15px;font-weight:700;color:var(--accent);margin:8px 0 4px}
+.checkout-darts{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.dart-chip{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:700}
+.dart-chip.triple{border-color:#e8c84a60;color:var(--accent)}
+.dart-chip.double{border-color:#4ae8a060;color:var(--green)}
+.dart-chip.bull{border-color:#4a9ae860;color:var(--blue)}
+input[type=text],input[type=number],select{width:100%;padding:12px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:15px;font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color 0.15s;margin-bottom:8px}
+input:focus,select:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.out-type-tag{display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;margin-bottom:12px}
+.out-type-tag.double{background:#4ae8a020;color:var(--green);border:1px solid var(--green)}
+.out-type-tag.master{background:#e8c84a20;color:var(--accent);border:1px solid var(--accent)}
+@keyframes pop{0%{transform:scale(0.95);opacity:0}100%{transform:scale(1);opacity:1}}
+.pop{animation:pop 0.2s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.shake{animation:shake 0.3s ease}
+.flex-row{display:flex;gap:8px}.mt{margin-top:12px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div style="margin-bottom:28px;margin-top:8px">
+    <p class="logo">DARTS<span>OUT</span></p>
+    <p class="tagline">チェックアウト クイズ</p>
+  </div>
+  <p class="card-title">モードを選択</p>
+  <div class="mode-card" onclick="selectMode('solo')">
+    <div class="mode-icon">🎯</div>
+    <div class="mode-info"><h3>ソロ練習</h3><p>一人で黙々とチェックアウトを覚える。<br>スコア・正答率を記録。</p></div>
+  </div>
+  <div class="mode-card" onclick="selectMode('vs')">
+    <div class="mode-icon">⚔️</div>
+    <div class="mode-info"><h3>対戦モード</h3><p>2人で交互に挑戦。先に多く正解した方が勝ち。</p></div>
+  </div>
+  <div class="mode-card" onclick="startPractice()">
+    <div class="mode-icon">🏹</div>
+    <div class="mode-info"><h3>プラクティス</h3><p>ダーツボードをタップして残りスコアを減らす。<br>アレンジを体で覚えよう。</p></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="screen" id="screen-settings">
+  <div style="margin-bottom:20px">
+    <p class="logo" style="font-size:26px" id="settings-title">SOLO</p>
+    <p class="tagline">ゲーム設定</p>
+  </div>
+  <div class="card">
+    <p class="card-title">アウトルール</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="out-option selected" id="opt-double" onclick="selectOutType('double')">
+        <p>ダブルアウト</p>
+        <p>ダブルまたは<br>ダブルブルで上がる</p>
+      </div>
+      <div class="out-option" id="opt-master" onclick="selectOutType('master')">
+        <p>マスターアウト</p>
+        <p>ダブルまたは<br>トリプルで上がる</p>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <p class="card-title">出題範囲</p>
+    <select id="range-preset" onchange="applyPreset()">
+      <option value="custom">カスタム設定</option>
+      <option value="all">全スコア（2〜170）</option>
+      <option value="high">高スコア（101〜170）</option>
+      <option value="mid">中スコア（41〜100）</option>
+      <option value="low">低スコア（2〜40）</option>
+    </select>
+    <div class="input-row" id="custom-range">
+      <div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:700">最小</p>
+        <input type="number" id="min-score" value="2" min="2" max="170"/>
+      </div>
+      <div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:700">最大</p>
+        <input type="number" id="max-score" value="170" min="2" max="170"/>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <p class="card-title">問題数</p>
+    <select id="question-count">
+      <option value="10">10問</option>
+      <option value="20" selected>20問</option>
+      <option value="30">30問</option>
+      <option value="50">50問</option>
+    </select>
+  </div>
+  <div class="card" id="vs-settings" style="display:none">
+    <p class="card-title">プレイヤー名</p>
+    <input type="text" id="p1-name" placeholder="プレイヤー1" maxlength="12" value="プレイヤー1"/>
+    <input type="text" id="p2-name" placeholder="プレイヤー2" maxlength="12" value="プレイヤー2"/>
+  </div>
+  <button class="btn accent" onclick="startGame()">スタート →</button>
+  <button class="btn ghost" onclick="showScreen('screen-home')">← 戻る</button>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="screen-quiz">
+  <div class="progress-row">
+    <div class="progress-bar"><div class="progress-fill" id="quiz-progress"></div></div>
+    <span class="progress-label" id="quiz-counter"></span>
+  </div>
+  <div id="turn-indicator" style="display:none">
+    <span class="turn-badge"><span class="turn-dot"></span><span id="turn-name"></span>のターン</span>
+  </div>
+  <div id="vs-score-display" style="display:none" class="vs-scores">
+    <div class="vs-player" id="vs-p1-card">
+      <p class="vs-player-name" id="vs-p1-name"></p>
+      <p class="vs-player-score" id="vs-p1-score">0</p>
+      <p class="vs-player-correct" id="vs-p1-correct">0正解</p>
+    </div>
+    <div class="vs-divider">VS</div>
+    <div class="vs-player" id="vs-p2-card">
+      <p class="vs-player-name" id="vs-p2-name"></p>
+      <p class="vs-player-score" id="vs-p2-score">0</p>
+      <p class="vs-player-correct" id="vs-p2-correct">0正解</p>
+    </div>
+  </div>
+  <div class="score-display pop" id="score-display">
+    <p class="score-label">チェックアウト スコア</p>
+    <p class="score-number" id="quiz-score">101</p>
+    <p class="score-sub" id="quiz-hint"></p>
+  </div>
+  <div class="choices" id="choices-grid"></div>
+  <div id="answer-result" style="display:none">
+    <div id="result-badge-area"></div>
+    <div class="card" id="answer-explanation"></div>
+    <button class="btn accent" id="next-btn" onclick="nextQuestion()">次の問題 →</button>
+  </div>
+</div>
+
+<!-- PRACTICE -->
+<div class="screen" id="screen-practice">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <p class="logo" style="font-size:22px">PRACTICE</p>
+    <button class="btn ghost" style="width:auto;margin:0;padding:8px 14px;font-size:12px" onclick="showScreen('screen-home')">← ホーム</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <div class="out-option selected" id="prac-opt-double" onclick="setPracOutType('double')">
+      <p>ダブルアウト</p>
+      <p>ダブル・DBで上がる</p>
+    </div>
+    <div class="out-option" id="prac-opt-master" onclick="setPracOutType('master')">
+      <p>マスターアウト</p>
+      <p>ダブル・トリプルで上がる</p>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+    <div class="card" style="padding:12px;text-align:center;margin:0">
+      <p style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:0.08em;margin-bottom:4px">目標</p>
+      <p style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--muted);line-height:1" id="prac-target">101</p>
+    </div>
+    <div class="card" style="padding:12px;text-align:center;margin:0;border-color:#e8c84a60">
+      <p style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:0.08em;margin-bottom:4px">残り</p>
+      <p style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1" id="prac-remain">101</p>
+    </div>
+    <div class="card" style="padding:12px;text-align:center;margin:0">
+      <p style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:0.08em;margin-bottom:4px">残り投数</p>
+      <p style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--text);line-height:1" id="prac-darts-left">3</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:10px;min-height:34px;align-items:center;flex-wrap:wrap" id="prac-log">
+    <span style="font-size:11px;color:var(--muted)">ボードをタップして投げよう</span>
+  </div>
+  <div id="prac-msg" style="display:none;margin-bottom:10px"></div>
+  <div style="position:relative;width:100%;max-width:340px;margin:0 auto 14px">
+    <svg id="dartboard" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;height:auto;touch-action:none;user-select:none"></svg>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button class="btn ghost" style="flex:1;margin:0" onclick="pracUndo()">↩ 1本戻す</button>
+    <button class="btn accent" style="flex:1;margin:0" id="prac-next-btn" onclick="pracNext()">次のスコア →</button>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <input type="number" id="prac-custom-input" min="2" max="180" placeholder="スコアを入力 (2〜180)"
+      style="flex:1;margin:0;padding:11px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:15px;font-family:'Noto Sans JP',sans-serif;outline:none;"
+      onkeydown="if(event.key==='Enter')setPracCustomScore()" />
+    <button class="btn ghost" style="width:auto;margin:0;padding:11px 16px;white-space:nowrap" onclick="setPracCustomScore()">セット</button>
+  </div>
+  <div id="prac-answer" style="display:none;margin-top:14px">
+    <div class="card">
+      <p class="card-title">推奨アレンジ</p>
+      <div class="checkout-darts" id="prac-answer-chips"></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.8" id="prac-answer-text"></p>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="screen-result">
+  <div id="solo-result">
+    <p class="logo" style="font-size:26px;margin-bottom:20px">RESULT</p>
+    <div class="card">
+      <div class="stat-row"><span class="stat-label">正解数</span><span class="stat-value accent" id="res-correct"></span></div>
+      <div class="stat-row"><span class="stat-label">正答率</span><span class="stat-value" id="res-rate"></span></div>
+      <div class="stat-row"><span class="stat-label">問題数</span><span class="stat-value" id="res-total"></span></div>
+    </div>
+    <div class="card">
+      <p class="card-title">評価</p>
+      <p style="font-size:24px;font-weight:900;margin-bottom:6px" id="res-grade"></p>
+      <p style="font-size:13px;color:var(--muted)" id="res-comment"></p>
+    </div>
+  </div>
+  <div id="vs-result" style="display:none">
+    <div class="winner-display">
+      <div class="winner-icon" id="winner-icon"></div>
+      <p class="winner-name" id="winner-name"></p>
+      <p class="winner-sub" id="winner-sub"></p>
+    </div>
+    <div class="card">
+      <div class="stat-row"><span class="stat-label" id="p1-result-name"></span><span class="stat-value accent" id="p1-result-score"></span></div>
+      <div class="stat-row"><span class="stat-label" id="p2-result-name"></span><span class="stat-value accent" id="p2-result-score"></span></div>
+    </div>
+  </div>
+  <div class="flex-row mt">
+    <button class="btn accent" onclick="playAgain()" style="flex:1">もう一度</button>
+    <button class="btn ghost" onclick="showScreen('screen-home')" style="flex:1">ホームへ</button>
+  </div>
+</div>
+
+</div>
+<script>
+// =====================================================================
+// アレンジ表データ（PDFより完全収録）
+// 空欄(上がれないスコア)はnull
+// =====================================================================
+
+// ダブルアウト アレンジ表 (SB=シングルブル25, DB=ダブルブル50)
+const DOUBLE_OUT = {
+  170:['T20','T20','DB'], 169:null, 168:null, 167:['T20','T19','DB'],
+  166:null, 165:null, 164:['T20','T18','DB'], 163:null, 162:null,
+  161:['T20','T17','DB'], 160:['T20','T20','D20'], 159:null,
+  158:['T20','T20','D19'], 157:['T20','T19','D20'], 156:['T20','T20','D18'],
+  155:['T20','T19','D19'], 154:['T20','T18','D20'], 153:['T20','T19','D18'],
+  152:['T20','T20','D16'], 151:['T20','T17','D20'], 150:['T20','T18','D18'],
+  149:['T20','T19','D16'], 148:['T20','T20','D14'], 147:['T20','T17','D18'],
+  146:['T20','T18','D16'], 145:['T20','T15','D20'], 144:['T20','T20','D12'],
+  143:['T20','T17','D16'], 142:['T20','T14','D20'], 141:['T20','T19','D12'],
+  140:['T20','T20','D10'], 139:['T19','T14','D20'], 138:['T20','T18','D12'],
+  137:['T20','T19','D10'], 136:['T20','T20','D8'],  135:['DB','T15','D20'],
+  134:['T20','T14','D16'], 133:['T20','T19','D8'],  132:['DB','T14','D20'],
+  131:['T20','T17','D10'], 130:['T20','T20','D5'],  129:['T19','T12','D18'],
+  128:['T18','T14','D16'], 127:['T20','T17','D8'],  126:['T19','T19','D6'],
+  125:['DB','T17','D12'],  124:['T20','T14','D11'], 123:['T19','T16','D9'],
+  122:['T18','T18','D7'],  121:['T20','T11','D14'], 120:['T20','S20','D20'],
+  119:['T19','T12','D13'], 118:['T20','S18','D20'], 117:['T20','S17','D20'],
+  116:['T20','S16','D20'], 115:['T20','S15','D20'], 114:['T20','S14','D20'],
+  113:['T20','S13','D20'], 112:['T20','S12','D20'], 111:['T20','S11','D20'],
+  110:['T20','S18','D16'], 109:['T20','S9','D20'],  108:['T20','S16','D16'],
+  107:['T20','S7','D20'],  106:['T20','S6','D20'],  105:['T20','S13','D16'],
+  104:['T20','S4','D20'],  103:['T20','S3','D20'],  102:['T20','S10','D16'],
+  101:['T20','S17','D12'], 100:['T20','D20'],        99:['T19','S10','D16'],
+  98:['T20','D19'],         97:['T19','D20'],         96:['T20','D18'],
+  95:['T19','D19'],         94:['T18','D20'],         93:['T19','D18'],
+  92:['T20','D16'],         91:['T17','D20'],         90:['T20','D15'],
+  89:['T19','D16'],         88:['T20','D14'],         87:['T17','D18'],
+  86:['T18','D16'],         85:['T15','D20'],         84:['T20','D12'],
+  83:['T17','D16'],         82:['DB','D16'],           81:['T19','D12'],
+  80:['T20','D10'],         79:['T19','D11'],          78:['T18','D12'],
+  77:['T19','D10'],         76:['T20','D8'],           75:['T17','D12'],
+  74:['T14','D16'],         73:['T19','D8'],           72:['T12','D18'],
+  71:['T17','D10'],         70:['T18','D8'],           69:['T19','D6'],
+  68:['T20','D4'],          67:['T17','D8'],           66:['T10','D18'],
+  65:['SB','D20'],          64:['T16','D8'],           63:['T13','D12'],
+  62:['T10','D16'],         61:['SB','D18'],           60:['S20','D20'],
+  59:['S19','D20'],         58:['S18','D20'],          57:['S17','D20'],
+  56:['S16','D20'],         55:['S15','D20'],          54:['S14','D20'],
+  53:['S13','D20'],         52:['S12','D20'],          51:['S11','D20'],
+  50:['S18','D16'],         49:['S9','D20'],           48:['S16','D16'],
+  47:['S7','D20'],          46:['S6','D20'],           45:['S13','D16'],
+  44:['S4','D20'],          43:['S3','D20'],           42:['S10','D16'],
+  41:['S17','D12'],         40:['D20'],                39:['S7','D16'],
+  38:['D19'],               37:['S5','D16'],           36:['D18'],
+  35:['S3','D16'],          34:['D17'],                33:['S17','D8'],
+  32:['D16'],               31:['S7','D12'],           30:['D15'],
+  29:['S13','D8'],          28:['D14'],                27:['S19','D4'],
+  26:['D13'],               25:['S9','D8'],            24:['D12'],
+  23:['S7','D8'],           22:['D11'],                21:['S5','D8'],
+  20:['D10'],               19:['S3','D8'],            18:['D9'],
+  17:['S1','D8'],           16:['D8'],                 15:['S7','D4'],
+  14:['D7'],                13:['S5','D4'],            12:['D6'],
+  11:['S3','D4'],           10:['D5'],                  9:['S1','D4'],
+   8:['D4'],                  7:['S3','D2'],             6:['D3'],
+   5:['S1','D2'],             4:['D2'],                  3:['S1','D1'],
+   2:['D1'],                  1:null
+};
+
+// マスターアウト アレンジ表
+const MASTER_OUT = {
+  180:['T20','T20','T20'], 179:null, 178:null,
+  177:['T20','T20','T19'], 176:null, 175:null,
+  174:['T20','T19','T19'], 173:null, 172:null,
+  171:['T20','T19','T18'], 170:['T20','T20','BULL'],
+  169:null,
+  168:['T18','T19','T19'], 167:['BULL','T19','T20'],
+  166:null,
+  165:['T15','T20','T20'], 164:['BULL','T19','T19'],
+  163:null,
+  162:['T20','T20','T14'], 161:['BULL','T19','T18'],
+  160:['BULL','BULL','T20'],159:['T19','T20','T14'],
+  158:['BULL','T18','T18'],157:['BULL','BULL','T19'],
+  156:['T20','T20','D18'], 155:['BULL','T19','T16'],
+  154:['BULL','BULL','T18'],153:['T17','T20','T14'],
+  152:['BULL','T20','T14'],151:['BULL','BULL','T17'],
+  150:['BULL','BULL','BULL'],149:['BULL','T17','T16'],
+  148:['BULL','BULL','T16'],147:['BULL','T19','D20'],
+  146:['BULL','T16','T16'],145:['BULL','BULL','T15'],
+  144:['BULL','T18','D20'],143:['BULL','T19','D18'],
+  142:['BULL','BULL','T14'],141:['BULL','T17','D20'],
+  140:['BULL','BULL','D20'],139:['T19','BULL','D16'],
+  138:['BULL','BULL','D19'],137:['BULL','T17','D18'],
+  136:['BULL','BULL','D18'],135:['BULL','T15','D20'],
+  134:['BULL','BULL','D17'],133:['BULL','BULL','T11'],
+  132:['BULL','BULL','D16'],131:['BULL','T19','D12'],
+  130:['BULL','BULL','D15'],129:['T19','T12','D18'],
+  128:['BULL','BULL','D14'],127:['T20','S17','BULL'],
+  126:['BULL','BULL','D13'],125:['BULL','T15','D15'],
+  124:['BULL','BULL','D12'],123:['BULL','T19','D8'],
+  122:['BULL','T12','D18'],121:['BULL','T17','D10'],
+  120:['T20','T20',null],  119:['BULL','S19','BULL'],
+  118:['BULL','S18','BULL'],117:['BULL','S17','BULL'],
+  116:['BULL','S16','BULL'],115:['BULL','S15','BULL'],
+  114:['BULL','S14','BULL'],113:['BULL','S13','BULL'],
+  112:['BULL','S12','BULL'],111:['BULL','S11','BULL'],
+  110:['BULL','T20',null],  109:['BULL','S9','BULL'],
+  108:['BULL','S8','BULL'], 107:['BULL','T19',null],
+  106:['BULL','S6','BULL'], 105:['BULL','S5','BULL'],
+  104:['BULL','T18',null],  103:['BULL','S3','BULL'],
+  102:['BULL','S2','BULL'], 101:['BULL','T17',null],
+  100:['BULL','BULL',null],  99:['T17','T16',null],
+   98:['BULL','T16',null],   97:['T19','D20',null],
+   96:['T16','T16',null],    95:['BULL','T15',null],
+   94:['T18','D20',null],    93:['T19','D18',null],
+   92:['BULL','T14',null],   91:['T17','D20',null],
+   90:['BULL','D20',null],   89:['T19','D16',null],
+   88:['BULL','D19',null],   87:['T17','D18',null],
+   86:['BULL','D18',null],   85:['T15','D20',null],
+   84:['BULL','D17',null],   83:['T17','D16',null],
+   82:['BULL','D16',null],   81:['T19','D12',null],
+   80:['BULL','D15',null],   79:['T19','D11',null],
+   78:['BULL','D14',null],   77:['T9','BULL',null],
+   76:['BULL','D13',null],   75:['T15','D15',null],
+   74:['BULL','D12',null],   73:['T19','D8',null],
+   72:['T12','D18',null],    71:['T17','D10',null],
+   70:['S20','BULL',null],   69:['S19','BULL',null],
+   68:['S18','BULL',null],   67:['S17','BULL',null],
+   66:['S16','BULL',null],   65:['S15','BULL',null],
+   64:['S14','BULL',null],   63:['S13','BULL',null],
+   62:['S12','BULL',null],   61:['S11','BULL',null],
+   60:['T20',null,null],     59:['S9','BULL',null],
+   58:['S8','BULL',null],    57:['T19',null,null],
+   56:['S6','BULL',null],    55:['S5','BULL',null],
+   54:['T18',null,null],     53:['S3','BULL',null],
+   52:['S2','BULL',null],    51:['T17',null,null],
+   50:['BULL',null,null],    49:['S17','D16',null],
+   48:['T16',null,null],     47:['S7','D20',null],
+   46:['S6','D20',null],     45:['T15',null,null],
+   44:['S4','D20',null],     43:['S3','D20',null],
+   42:['T14',null,null],     41:['S11','T15',null],
+   40:['D20',null,null],     39:['T13',null,null],
+   38:['D19',null,null],     37:['S5','D16',null],
+   36:['D18',null,null],     35:['S3','D16',null],
+   34:['D17',null,null],     33:['S1','D16',null],
+   32:['D16',null,null],     31:['S15','D8',null],
+   30:['D15',null,null],     29:['S13','D8',null],
+   28:['D14',null,null],     27:['T9',null,null],
+   26:['D13',null,null],     25:['S17','D4',null],
+   24:['D12',null,null],     23:['S7','D8',null],
+   22:['D11',null,null],     21:['T7',null,null],
+   20:['D10',null,null],     19:['S3','D8',null],
+   18:['D9',null,null],      17:['S1','D8',null],
+   16:['D8',null,null],      15:['T5',null,null],
+   14:['D7',null,null],      13:['S5','D4',null],
+   12:['D6',null,null],      11:['S3','D4',null],
+   10:['D5',null,null],       9:['T3',null,null],
+    8:['D4',null,null],        7:['S3','D2',null],
+    6:['D3',null,null],        5:['S1','D2',null],
+    4:['D2',null,null],        3:['T1',null,null],
+    2:['D1',null,null],        1:null
+};
+
+// =====================================================================
+// ゲームロジック
+// =====================================================================
+let mode='solo', outType='double', minScore=2, maxScore=170, totalQ=20;
+let questions=[], qIndex=0, correct=0;
+let p1name='プレイヤー1', p2name='プレイヤー2', p1score=0, p2score=0, currentPlayer=1;
+let answered=false;
+
+function getTable(){ return outType==='master' ? MASTER_OUT : DOUBLE_OUT; }
+
+function getAnswer(score){
+  const row = getTable()[score];
+  if(!row) return null;
+  return row.filter(d=>d!==null);
+}
+
+function getValidScores(){
+  const table = getTable();
+  const result = [];
+  for(let s=minScore; s<=maxScore; s++){
+    if(table[s] !== null && table[s] !== undefined) result.push(s);
+  }
+  return result;
+}
+
+function formatDart(d){
+  if(!d) return '';
+  if(d==='DB') return 'DB（ダブルブル）';
+  if(d==='BULL') return outType==='master' ? 'BULL（ブル）' : 'BULL（ブル）';
+  if(d==='SB') return 'SB（シングルブル）';
+  if(d.startsWith('T')) return `${d}（トリプル${d.slice(1)}）`;
+  if(d.startsWith('D')) return `${d}（ダブル${d.slice(1)}）`;
+  if(d.startsWith('S')) return `${d}（${d.slice(1)}）`;
+  return d;
+}
+
+function dartChipClass(d){
+  if(!d) return '';
+  if(d.startsWith('T')) return 'triple';
+  if(d.startsWith('D')||d==='DB') return 'double';
+  if(d==='BULL'||d==='SB') return 'bull';
+  return '';
+}
+
+function formatCheckout(arr){ return arr.filter(d=>d).join(' → '); }
+
+// 不正解の選択肢を生成（アレンジ表の別スコアから）
+function generateWrongAnswers(score, correctArr){
+  const table = getTable();
+  const tried = new Set([formatCheckout(correctArr)]);
+  const wrongs = [];
+  const pool = getValidScores().filter(s=>s!==score);
+  shuffle(pool);
+  for(const s of pool){
+    if(wrongs.length >= 3) break;
+    const a = getAnswer(s);
+    if(!a) continue;
+    const key = formatCheckout(a);
+    if(!tried.has(key)){ wrongs.push(a); tried.add(key); }
+  }
+  // 足りなければ最後の1本をシングルに差し替えたフェイク
+  if(wrongs.length < 3){
+    const fake = [...correctArr];
+    const last = fake[fake.length-1];
+    if(last && (last.startsWith('D')||last.startsWith('T'))){
+      const num = parseInt(last.replace(/^[DT]/,'').replace('B',''));
+      fake[fake.length-1] = `S${num||20}`;
+      const key = formatCheckout(fake);
+      if(!tried.has(key)){ wrongs.push(fake); tried.add(key); }
+    }
+  }
+  return wrongs.slice(0,3);
+}
+
+// =====================================================================
+// UI
+// =====================================================================
+function selectOutType(t){
+  outType = t;
+  document.getElementById('opt-double').classList.toggle('selected', t==='double');
+  document.getElementById('opt-master').classList.toggle('selected', t==='master');
+}
+
+function selectMode(m){
+  mode = m;
+  document.getElementById('settings-title').textContent = m==='solo' ? 'SOLO' : 'VS';
+  document.getElementById('vs-settings').style.display = m==='vs' ? 'block' : 'none';
+  showScreen('screen-settings');
+}
+
+function applyPreset(){
+  const v = document.getElementById('range-preset').value;
+  const show = v==='custom';
+  document.getElementById('custom-range').style.display = show ? 'grid' : 'none';
+  const map = {all:[2,170], high:[101,170], mid:[41,100], low:[2,40]};
+  if(map[v]){
+    document.getElementById('min-score').value = map[v][0];
+    document.getElementById('max-score').value = map[v][1];
+  }
+}
+
+function startGame(){
+  minScore = parseInt(document.getElementById('min-score').value)||2;
+  maxScore = parseInt(document.getElementById('max-score').value)||170;
+  totalQ   = parseInt(document.getElementById('question-count').value)||20;
+  p1name   = document.getElementById('p1-name').value.trim()||'プレイヤー1';
+  p2name   = document.getElementById('p2-name').value.trim()||'プレイヤー2';
+  p1score=0; p2score=0; currentPlayer=1; correct=0; qIndex=0;
+
+  const pool = getValidScores();
+  if(!pool.length){ alert('その範囲に有効なスコアがありません。'); return; }
+  questions = [];
+  for(let i=0;i<totalQ;i++) questions.push(pool[Math.floor(Math.random()*pool.length)]);
+
+  showScreen('screen-quiz');
+  setupQuizUI();
+  renderQuestion();
+}
+
+function setupQuizUI(){
+  const isVs = mode==='vs';
+  document.getElementById('turn-indicator').style.display = isVs ? 'flex' : 'none';
+  document.getElementById('vs-score-display').style.display = isVs ? 'grid' : 'none';
+  if(isVs){
+    document.getElementById('vs-p1-name').textContent = p1name;
+    document.getElementById('vs-p2-name').textContent = p2name;
+    updateVsScores();
+  }
+}
+
+function updateVsScores(){
+  document.getElementById('vs-p1-score').textContent = p1score;
+  document.getElementById('vs-p2-score').textContent = p2score;
+  document.getElementById('vs-p1-correct').textContent = `${p1score}正解`;
+  document.getElementById('vs-p2-correct').textContent = `${p2score}正解`;
+  document.getElementById('vs-p1-card').classList.toggle('active', currentPlayer===1);
+  document.getElementById('vs-p2-card').classList.toggle('active', currentPlayer===2);
+  document.getElementById('turn-name').textContent = currentPlayer===1 ? p1name : p2name;
+}
+
+function renderQuestion(){
+  if(qIndex >= questions.length){ showFinalResult(); return; }
+  answered = false;
+  const score = questions[qIndex];
+  const correctArr = getAnswer(score);
+
+  document.getElementById('quiz-progress').style.width = `${(qIndex/questions.length)*100}%`;
+  document.getElementById('quiz-counter').textContent = `${qIndex+1}/${questions.length}`;
+  document.getElementById('quiz-score').textContent = score;
+
+  const label = outType==='master' ? 'マスターアウト' : 'ダブルアウト';
+  const darts = correctArr.length;
+  document.getElementById('quiz-hint').textContent = `${label} ／ ${darts}本フィニッシュ`;
+
+  const wrongs = generateWrongAnswers(score, correctArr);
+  const choices = shuffle([
+    {arr:correctArr, correct:true},
+    ...wrongs.map(w=>({arr:w, correct:false}))
+  ]);
+
+  document.getElementById('choices-grid').innerHTML = choices.map((c,i)=>`
+    <div class="choice" id="choice-${i}" onclick="selectAnswer(${i},${c.correct},${score})">
+      <p class="choice-label">選択肢 ${['A','B','C','D'][i]}</p>
+      <p class="choice-text">${formatCheckout(c.arr)}</p>
+    </div>
+  `).join('');
+
+  // 正解の選択肢インデックスを保存
+  window._correctChoiceText = formatCheckout(correctArr);
+
+  document.getElementById('answer-result').style.display = 'none';
+  const sd = document.getElementById('score-display');
+  sd.classList.remove('pop'); void sd.offsetWidth; sd.classList.add('pop');
+}
+
+function selectAnswer(idx, isCorrect, score){
+  if(answered) return;
+  answered = true;
+
+  const allChoices = document.querySelectorAll('.choice');
+  allChoices.forEach(c=>{ c.classList.add('disabled'); c.onclick=null; });
+
+  const chosen = document.getElementById(`choice-${idx}`);
+  if(isCorrect){
+    chosen.classList.add('correct');
+    if(mode==='solo') correct++;
+    else if(currentPlayer===1) p1score++;
+    else p2score++;
+  } else {
+    chosen.classList.add('wrong','shake');
+    allChoices.forEach(c=>{
+      if(c.querySelector('.choice-text').textContent === window._correctChoiceText)
+        c.classList.add('correct');
+    });
+  }
+
+  document.getElementById('result-badge-area').innerHTML =
+    `<div class="result-badge ${isCorrect?'correct':'wrong'}">${isCorrect?'✓ 正解！':'✗ 不正解'}</div>`;
+
+  const correctArr = getAnswer(score);
+  const label = outType==='master' ? 'マスターアウト' : 'ダブルアウト';
+
+  document.getElementById('answer-explanation').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <p style="font-size:13px;font-weight:700;">スコア ${score} の正解アレンジ</p>
+      <span class="out-type-tag ${outType}">${label}</span>
+    </div>
+    <div class="checkout-darts">
+      ${correctArr.map(d=>`<span class="dart-chip ${dartChipClass(d)}">${d}</span>`).join('')}
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.8">
+      ${correctArr.map(d=>formatDart(d)).filter(Boolean).join('　→　')}
+    </p>
+  `;
+
+  document.getElementById('answer-result').style.display = 'block';
+  if(mode==='vs') updateVsScores();
+
+  const isLast = qIndex >= questions.length-1;
+  document.getElementById('next-btn').textContent = isLast ? '結果を見る →' : '次の問題 →';
+}
+
+function nextQuestion(){
+  if(mode==='vs') currentPlayer = currentPlayer===1 ? 2 : 1;
+  qIndex++;
+  if(qIndex >= questions.length){ showFinalResult(); return; }
+  if(mode==='vs') updateVsScores();
+  renderQuestion();
+}
+
+function showFinalResult(){
+  showScreen('screen-result');
+  if(mode==='solo'){
+    document.getElementById('solo-result').style.display = 'block';
+    document.getElementById('vs-result').style.display = 'none';
+    const rate = Math.round((correct/questions.length)*100);
+    document.getElementById('res-correct').textContent = `${correct} / ${questions.length}`;
+    document.getElementById('res-rate').textContent = `${rate}%`;
+    document.getElementById('res-total').textContent = `${questions.length}問`;
+    const {grade,comment} = getGrade(rate);
+    document.getElementById('res-grade').textContent = grade;
+    document.getElementById('res-comment').textContent = comment;
+  } else {
+    document.getElementById('solo-result').style.display = 'none';
+    document.getElementById('vs-result').style.display = 'block';
+    const draw = p1score===p2score;
+    const winner = p1score>p2score ? p1name : p2name;
+    document.getElementById('winner-icon').textContent = draw ? '🤝' : '🏆';
+    document.getElementById('winner-name').textContent = draw ? 'DRAW' : winner;
+    document.getElementById('winner-sub').textContent = draw ? '引き分け！' : `${winner}の勝利！`;
+    document.getElementById('p1-result-name').textContent = p1name;
+    document.getElementById('p2-result-name').textContent = p2name;
+    document.getElementById('p1-result-score').textContent = `${p1score}正解`;
+    document.getElementById('p2-result-score').textContent = `${p2score}正解`;
+  }
+}
+
+function getGrade(rate){
+  if(rate>=95) return {grade:'S ランク 🎯', comment:'完璧！プロレベルのチェックアウト知識です。'};
+  if(rate>=80) return {grade:'A ランク ⭐', comment:'素晴らしい！上級者のチェックアウト力。'};
+  if(rate>=65) return {grade:'B ランク 👍', comment:'なかなか良い！あと少しで上級者。'};
+  if(rate>=50) return {grade:'C ランク 📈', comment:'まだまだ伸びしろあり。練習を続けよう。'};
+  return {grade:'D ランク 🔰', comment:'基礎から覚えよう。繰り返しが大事！'};
+}
+
+function playAgain(){
+  qIndex=0; correct=0; p1score=0; p2score=0; currentPlayer=1;
+  const pool = getValidScores();
+  questions = [];
+  for(let i=0;i<totalQ;i++) questions.push(pool[Math.floor(Math.random()*pool.length)]);
+  showScreen('screen-quiz');
+  setupQuizUI();
+  renderQuestion();
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// =====================================================================
+// DARTBOARD SVG RENDERER
+// =====================================================================
+const BOARD_NUMBERS = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
+const CX=200,CY=200;
+const R = {dbull:13,bull:30,trIn:90,trOut:112,dblIn:162,dblOut:185,outer:195};
+
+function segAngle(i){ return i*18; }
+function polarToXY(angleDeg,r){
+  const a=angleDeg*Math.PI/180;
+  return [CX+r*Math.sin(a),CY-r*Math.cos(a)];
+}
+function segPath(angleDeg,r1,r2,span=18){
+  const a1=angleDeg-span/2,a2=angleDeg+span/2;
+  const [x1,y1]=polarToXY(a1,r1);
+  const [x2,y2]=polarToXY(a2,r1);
+  const [x3,y3]=polarToXY(a2,r2);
+  const [x4,y4]=polarToXY(a1,r2);
+  return `M${x1},${y1} A${r1},${r1} 0 0,1 ${x2},${y2} L${x3},${y3} A${r2},${r2} 0 0,0 ${x4},${y4} Z`;
+}
+
+function buildBoard(){
+  const svg=document.getElementById('dartboard');
+  if(!svg) return;
+  svg.innerHTML='';
+  const bg=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  bg.setAttribute('cx',CX);bg.setAttribute('cy',CY);bg.setAttribute('r',198);
+  bg.setAttribute('fill','#111');svg.appendChild(bg);
+
+  BOARD_NUMBERS.forEach((num,i)=>{
+    const angle=segAngle(i);
+    const dark=i%2===0;
+    const sc=dark?'#1e1e1e':'#e8dfc0';
+    const rc=dark?'#c0392b':'#27ae60';
+    function addSeg(r1,r2,drt,val,fill){
+      const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+      p.setAttribute('d',segPath(angle,r1,r2));
+      p.setAttribute('fill',fill);p.setAttribute('stroke','#2a2a2a');p.setAttribute('stroke-width','0.8');
+      p.dataset.dart=drt;p.dataset.val=val;svg.appendChild(p);
+    }
+    addSeg(R.bull,R.trIn,`S${num}`,num,sc);
+    addSeg(R.trIn,R.trOut,`T${num}`,num*3,rc);
+    addSeg(R.trOut,R.dblIn,`S${num}`,num,sc);
+    addSeg(R.dblIn,R.dblOut,`D${num}`,num*2,rc);
+  });
+
+  // Single bull
+  const sb=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  sb.setAttribute('cx',CX);sb.setAttribute('cy',CY);sb.setAttribute('r',R.bull);
+  sb.setAttribute('fill','#27ae60');sb.setAttribute('stroke','#2a2a2a');sb.setAttribute('stroke-width','0.8');
+  sb.dataset.dart='BULL';sb.dataset.val=25;svg.appendChild(sb);
+
+  // Double bull
+  const db=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  db.setAttribute('cx',CX);db.setAttribute('cy',CY);db.setAttribute('r',R.dbull);
+  db.setAttribute('fill','#c0392b');db.setAttribute('stroke','#2a2a2a');db.setAttribute('stroke-width','0.8');
+  db.dataset.dart='DB';db.dataset.val=50;svg.appendChild(db);
+
+  // Outer wire
+  const wire=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  wire.setAttribute('cx',CX);wire.setAttribute('cy',CY);wire.setAttribute('r',R.dblOut+1);
+  wire.setAttribute('fill','none');wire.setAttribute('stroke','#666');wire.setAttribute('stroke-width','2');
+  svg.appendChild(wire);
+
+  // Numbers
+  BOARD_NUMBERS.forEach((num,i)=>{
+    const angle=segAngle(i);
+    const [tx,ty]=polarToXY(angle,R.dblOut+14);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',tx);t.setAttribute('y',ty);
+    t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','central');
+    t.setAttribute('font-size','13');t.setAttribute('font-weight','700');
+    t.setAttribute('fill','#f0f0ee');t.setAttribute('font-family','Noto Sans JP,sans-serif');
+    t.textContent=num;svg.appendChild(t);
+  });
+
+  svg.addEventListener('click',boardClick);
+  svg.addEventListener('touchend',e=>{
+    e.preventDefault();
+    const touch=e.changedTouches[0];
+    const el=document.elementFromPoint(touch.clientX,touch.clientY);
+    if(el&&el.dataset&&el.dataset.dart) handleDart(el.dataset.dart,parseInt(el.dataset.val));
+  },{passive:false});
+}
+
+function boardClick(e){
+  const el=e.target;
+  if(el&&el.dataset&&el.dataset.dart) handleDart(el.dataset.dart,parseInt(el.dataset.val));
+}
+
+// =====================================================================
+// PRACTICE MODE
+// =====================================================================
+let pracTarget=0,pracRemain=0,pracDarts=[],pracOutType='double';
+
+function startPractice(){
+  // inherit current quiz outType as default
+  setPracOutType(outType);
+  showScreen('screen-practice');
+  buildBoard();
+  pracNewScore();
+}
+
+function setPracOutType(t){
+  pracOutType=t;
+  document.getElementById('prac-opt-double').classList.toggle('selected',t==='double');
+  document.getElementById('prac-opt-master').classList.toggle('selected',t==='master');
+  // Reset current round when rule changes
+  if(pracTarget>0){
+    pracDarts=[];
+    pracRemain=pracTarget;
+    document.getElementById('prac-msg').style.display='none';
+    document.getElementById('prac-answer').style.display='none';
+    pracUpdateUI();
+  }
+}
+
+function pracNewScore(){
+  const table=pracOutType==='master'?MASTER_OUT:DOUBLE_OUT;
+  const pool=[];
+  for(let s=2;s<=180;s++){if(table[s])pool.push(s);}
+  pracTarget=pool[Math.floor(Math.random()*pool.length)];
+  pracRemain=pracTarget;
+  pracDarts=[];
+  pracUpdateUI();
+  document.getElementById('prac-msg').style.display='none';
+  document.getElementById('prac-answer').style.display='none';
+}
+
+function isValidFinisher(dartStr){
+  if(pracOutType==='master') return dartStr.startsWith('D')||dartStr.startsWith('T')||dartStr==='DB'||dartStr==='BULL';
+  return dartStr.startsWith('D')||dartStr==='DB';
+}
+
+function flashSegment(dartStr){
+  const svg=document.getElementById('dartboard');
+  if(!svg) return;
+  svg.querySelectorAll(`[data-dart="${dartStr}"]`).forEach(el=>{
+    const orig=el.getAttribute('fill');
+    el.setAttribute('fill','#e8c84a');
+    setTimeout(()=>el.setAttribute('fill',orig),280);
+  });
+}
+
+function handleDart(dartStr,val){
+  if(pracDarts.length>=3) return;
+  const msg=document.getElementById('prac-msg');
+  msg.style.display='none';
+  // マスターアウトではアウターブル(BULL)も50点扱い
+  if(pracOutType==='master' && dartStr==='BULL') val=50;
+  const newRemain=pracRemain-val;
+
+  if(newRemain<0){
+    showBust(`バスト！ ${pracRemain} には入りすぎです`);return;
+  }
+  if(newRemain===1){
+    showBust('バスト！ 残り1はフィニッシュできません');return;
+  }
+  if(newRemain===0&&!isValidFinisher(dartStr)){
+    const rule=pracOutType==='master'?'ダブルかトリプル':'ダブル';
+    showBust(`フィニッシュには${rule}が必要です！`);return;
+  }
+
+  flashSegment(dartStr);
+  pracDarts.push({dart:dartStr,val});
+  pracRemain=newRemain;
+  pracUpdateUI();
+
+  if(pracRemain===0){
+    const m=document.getElementById('prac-msg');
+    m.style.display='block';
+    m.innerHTML=`<div style="background:#4ae8a018;border:1px solid var(--green);border-radius:var(--radius-sm);padding:10px 14px;font-size:14px;font-weight:700;color:var(--green)">チェックアウト！ 素晴らしい！</div>`;
+    pracShowAnswer();
+  } else if(pracDarts.length>=3){
+    pracShowAnswer();
+  }
+}
+
+function showBust(text){
+  const m=document.getElementById('prac-msg');
+  m.style.display='block';
+  m.innerHTML=`<div style="background:#e84a4a18;border:1px solid var(--red);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;font-weight:700;color:var(--red)">${text}</div>`;
+}
+
+function pracUpdateUI(){
+  document.getElementById('prac-target').textContent=pracTarget;
+  document.getElementById('prac-remain').textContent=pracRemain;
+  document.getElementById('prac-darts-left').textContent=3-pracDarts.length;
+  const log=document.getElementById('prac-log');
+  if(pracDarts.length===0){
+    log.innerHTML='<span style="font-size:11px;color:var(--muted)">ボードをタップして投げよう</span>';
+  } else {
+    log.innerHTML=pracDarts.map(d=>`<span class="dart-chip ${dartChipClass(d.dart)}">${d.dart} <span style="opacity:0.55;font-size:10px">-${d.val}</span></span>`).join('');
+  }
+}
+
+function pracShowAnswer(){
+  const table=pracOutType==='master'?MASTER_OUT:DOUBLE_OUT;
+  const arr=(table[pracTarget]||[]).filter(d=>d);
+  document.getElementById('prac-answer').style.display='block';
+  document.getElementById('prac-answer-chips').innerHTML=arr.map(d=>`<span class="dart-chip ${dartChipClass(d)}">${d}</span>`).join('');
+  document.getElementById('prac-answer-text').innerHTML=arr.map(d=>formatDart(d)).filter(Boolean).join('　→　');
+}
+
+function pracUndo(){
+  if(pracDarts.length===0) return;
+  const last=pracDarts.pop();
+  pracRemain+=last.val;
+  document.getElementById('prac-msg').style.display='none';
+  document.getElementById('prac-answer').style.display='none';
+  pracUpdateUI();
+}
+
+function pracNext(){ pracNewScore(); }
+
+function setPracCustomScore(){
+  const input = document.getElementById('prac-custom-input');
+  const val = parseInt(input.value);
+  if(isNaN(val)||val<2||val>180){
+    const msg=document.getElementById('prac-msg');
+    msg.style.display='block';
+    msg.innerHTML='<div style="background:#e84a4a18;border:1px solid var(--red);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;font-weight:700;color:var(--red)">2〜180の数字を入力してください</div>';
+    return;
+  }
+  const table=pracOutType==='master'?MASTER_OUT:DOUBLE_OUT;
+  if(!table[val]){
+    const msg=document.getElementById('prac-msg');
+    msg.style.display='block';
+    msg.innerHTML='<div style="background:#e84a4a18;border:1px solid var(--red);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;font-weight:700;color:var(--red)">'+val+' は上がれないスコアです</div>';
+    return;
+  }
+  pracTarget=val;
+  pracRemain=val;
+  pracDarts=[];
+  input.value='';
+  pracUpdateUI();
+  document.getElementById('prac-msg').style.display='none';
+  document.getElementById('prac-answer').style.display='none';
+}
+
+</script>
+</body>
+</html>
