@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ダーツ チェックアウトクイズ</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -13,8 +13,8 @@
   --accent:#e8c84a;--accent2:#f0a030;--red:#e84a4a;--green:#4ae8a0;--blue:#4a9ae8;
   --radius:12px;--radius-sm:8px;
 }
-body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-.app{max-width:500px;margin:0 auto;padding:20px 16px 60px}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
+.app{max-width:500px;margin:0 auto;padding:20px 16px 60px;width:100%;overflow-x:hidden}
 .screen{display:none}.screen.active{display:block}
 .logo{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:3px;color:var(--accent);line-height:1}
 .logo span{color:var(--text);opacity:0.4}
@@ -82,7 +82,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 .dart-chip.triple{border-color:#e8c84a60;color:var(--accent)}
 .dart-chip.double{border-color:#4ae8a060;color:var(--green)}
 .dart-chip.bull{border-color:#4a9ae860;color:var(--blue)}
-input[type=text],input[type=number],select{width:100%;padding:12px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:15px;font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color 0.15s;margin-bottom:8px}
+input[type=text],input[type=number],select{width:100%;padding:12px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:16px;font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color 0.15s;margin-bottom:8px;-webkit-appearance:none;appearance:none}
 input:focus,select:focus{border-color:var(--accent)}
 select option{background:var(--surface2)}
 .input-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -94,6 +94,22 @@ select option{background:var(--surface2)}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
 .shake{animation:shake 0.3s ease}
 .flex-row{display:flex;gap:8px}.mt{margin-top:12px}
+
+@media(max-width:480px){
+  .logo{font-size:28px}
+  .score-number{font-size:72px}
+  .choices{grid-template-columns:1fr 1fr;gap:6px}
+  .choice{padding:12px 10px}
+  .choice-text{font-size:12px}
+  .btn{padding:12px 16px;font-size:13px}
+  .mode-card{padding:16px 14px;gap:12px}
+  .mode-icon{font-size:24px}
+  .vs-player-score{font-size:34px}
+  .card{padding:16px}
+  .dart-chip{font-size:12px;padding:4px 8px}
+  .checkout-darts{gap:4px}
+  input[type=number]#prac-custom-input{font-size:16px}
+}
 </style>
 </head>
 <body>
